@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  name       String
+  username   String   @unique
+  email      String   @unique
+  password   String
+  phone      String?
+  role       String   @default("operator") // admin, manager, operator, viewer
+  status     String   @default("active") // active, inactive, suspended
+  avatar     String?
+  department String?
+  preferences String @default("{}") // JSON stringified user preferences
+  createdAt  DateTime @default(now())
+  lastLogin  DateTime @default(now())
+  apiKeys    ApiKey[]
+}
+
+model Server {
+  id          Int      @id @default(autoincrement())
+  name        String
+  ip          String
+  hostname    String
+  os          String
+  type        String   // web, db, cache, app, load-balancer, mail
+  status      String   @default("offline") // online, offline, maintenance, warning
+  cpu         Float    @default(0)
+  memory      Float    @default(0)
+  disk        Float    @default(0)
+  uptime      String   @default("0m")
+  location    String   @default("")
+  environment String   @default("production") // production, staging, development, testing
+  tags        String   @default("[]") // JSON stringified array of tags
+  lastChecked DateTime @default(now())
+  createdAt   DateTime @default(now())
+  
+  // Specs
+  cpuCores    Int      @default(1)
+  ramGB       Int      @default(1)
+  diskGB      Int      @default(20)
+  network     String   @default("1Gbps")
+}
+
+model Incident {
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String
+  status          String   // open, in-progress, resolved, closed
+  priority        String   // p1, p2, p3, p4
+  category        String   // outage, degraded, security, maintenance, other
+  assignedTo      String
+  reportedBy      String
+  affectedSystems String   // JSON stringified array of systems
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  resolvedAt      DateTime?
+}
+
+model Asset {
+  id             Int       @id @default(autoincrement())
+  name           String
+  type           String    // hardware, software, license, network, peripheral
+  serial         String?
+  model          String?
+  manufacturer   String?
+  purchaseDate   DateTime?
+  warrantyExpiry DateTime?
+  status         String    @default("active") // active, inactive, maintenance, retired, lost
+  location       String?
+  assignedTo     String?
+  cost           Float?
+  notes          String?
+  tags           String    @default("[]") // JSON stringified array of tags
+  createdAt      DateTime  @default(now())
+}
+
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String   // JSON stringified value
+  updatedAt DateTime @updatedAt
+}
+
+model ApiKey {
+  id        Int      @id @default(autoincrement())
+  name      String
+  key       String   @unique
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastUsed  DateTime?
+  createdAt DateTime @default(now())
+}
